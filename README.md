@@ -125,7 +125,9 @@ Add chatbot or voice-based symptom input.
 Deploy to cloud (AWS, Azure, GCP) or mobile app.
 
 Add an admin dashboard to manage datasets and retraining.
+
 Main code:App.py
+
 from flask import Flask, request, jsonify
 import pandas as pd
 from sklearn.model_selection import train_test_split
