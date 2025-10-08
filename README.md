@@ -125,3 +125,49 @@ Add chatbot or voice-based symptom input.
 Deploy to cloud (AWS, Azure, GCP) or mobile app.
 
 Add an admin dashboard to manage datasets and retraining.
+Main code:App.py
+from flask import Flask, request, jsonify
+import pandas as pd
+from sklearn.model_selection import train_test_split
+from sklearn.tree import DecisionTreeClassifier
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.naive_bayes import GaussianNB
+from sklearn.metrics import accuracy_score, confusion_matrix
+
+# --- Load Dataset ---
+data = pd.read_csv("disease_data.csv")
+X = data.drop(columns=["disease"])
+y = data["disease"]
+
+# --- Train-Test Split ---
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+# --- Train Models ---
+dt_model = DecisionTreeClassifier()
+rf_model = RandomForestClassifier()
+nb_model = GaussianNB()
+
+dt_model.fit(X_train, y_train)
+rf_model.fit(X_train, y_train)
+nb_model.fit(X_train, y_train)
+
+# --- Evaluate Models ---
+models = {"Decision Tree": dt_model, "Random Forest": rf_model, "Naive Bayes": nb_model}
+for name, model in models.items():
+    y_pred = model.predict(X_test)
+    print(f"{name} Accuracy: {accuracy_score(y_test, y_pred):.2f}")
+    print(f"{name} Confusion Matrix:\n{confusion_matrix(y_test, y_pred)}\n")
+
+# --- Flask App for Real-Time Predictions ---
+app = Flask(__name__)
+
+@app.route("/predict", methods=["POST"])
+def predict():
+    data = request.get_json()
+    symptoms = [data.get(feature, 0) for feature in X.columns]
+    prediction = rf_model.predict([symptoms])[0]  # Using Random Forest here
+    return jsonify({"predicted_disease": prediction})
+
+if __name__ == "__main__":
+    app.run(debug=True)
+
